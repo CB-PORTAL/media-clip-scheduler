@@ -1,1 +1,1 @@
-# media-clip-scheduler
+[media-clip-scheduler]
