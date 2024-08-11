@@ -1,7 +1,7 @@
 import os
 import time
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import gspread
@@ -48,7 +48,8 @@ def get_next_available_date(calendar_service):
 def generate_random_time(date):
     hour = random.randint(POSTING_HOURS_START, POSTING_HOURS_END - 1)
     minute = random.randint(0, 59)
-    return datetime.combine(date, datetime.min.time()) + timedelta(hours=hour, minutes=minute)
+    local_timezone = timezone(timedelta(hours=-5))  # Adjust for your timezone (EST: UTC-5)
+    return datetime.combine(date, datetime.min.time(), tzinfo=local_timezone) + timedelta(hours=hour, minutes=minute)
 
 class MediaClipHandler(FileSystemEventHandler):
     def __init__(self, sheet, drive_service, calendar_service):
@@ -82,26 +83,26 @@ class MediaClipHandler(FileSystemEventHandler):
         scheduled_datetime = generate_random_time(next_date)
         platform = random.choice(PLATFORMS)
 
-    # Add to Google Sheet
+        # Add to Google Sheet
         self.sheet.append_row([os.path.basename(video_path), file_id, scheduled_datetime.strftime('%Y-%m-%d %H:%M'), platform])
 
-    # Create Calendar Event
+        # Create Calendar Event
         event = {
             'summary': f'Post video on {platform}',
             'description': f'Video file ID: {file_id}\nPath: {video_path}',
             'start': {
-            'dateTime': scheduled_datetime.isoformat(),
-            'timeZone': 'America/New_York',  # Replace with your timezone
-        },
-        'end': {
-            'dateTime': (scheduled_datetime + timedelta(minutes=15)).isoformat(),
-            'timeZone': 'America/New_York',  # Replace with your timezone
-        },
-    }
+                'dateTime': scheduled_datetime.isoformat(),
+                'timeZone': 'America/New_York',
+            },
+            'end': {
+                'dateTime': (scheduled_datetime + timedelta(minutes=15)).isoformat(),
+                'timeZone': 'America/New_York',
+            },
+        }
 
-    event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-    print(f"Event created: {event.get('htmlLink')}")
-    print(f"Scheduled '{os.path.basename(video_path)}' for {scheduled_datetime} on {platform}")
+        event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+        print(f"Event created: {event.get('htmlLink')}")
+        print(f"Scheduled '{os.path.basename(video_path)}' for {scheduled_datetime} on {platform}")
 
 def main():
     sheet, drive_service, calendar_service = authenticate_google_services()
