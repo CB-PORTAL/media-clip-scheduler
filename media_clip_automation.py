@@ -82,26 +82,26 @@ class MediaClipHandler(FileSystemEventHandler):
         scheduled_datetime = generate_random_time(next_date)
         platform = random.choice(PLATFORMS)
 
-        # Add to Google Sheet
+    # Add to Google Sheet
         self.sheet.append_row([os.path.basename(video_path), file_id, scheduled_datetime.strftime('%Y-%m-%d %H:%M'), platform])
 
-        # Create Calendar Event
+    # Create Calendar Event
         event = {
             'summary': f'Post video on {platform}',
             'description': f'Video file ID: {file_id}\nPath: {video_path}',
             'start': {
-                'dateTime': scheduled_datetime.isoformat(),
-                'timeZone': 'Your_Timezone',
-            },
-            'end': {
-                'dateTime': (scheduled_datetime + timedelta(minutes=15)).isoformat(),
-                'timeZone': 'Your_Timezone',
-            },
-        }
+            'dateTime': scheduled_datetime.isoformat(),
+            'timeZone': 'America/New_York',  # Replace with your timezone
+        },
+        'end': {
+            'dateTime': (scheduled_datetime + timedelta(minutes=15)).isoformat(),
+            'timeZone': 'America/New_York',  # Replace with your timezone
+        },
+    }
 
-        event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-        print(f"Event created: {event.get('htmlLink')}")
-        print(f"Scheduled '{os.path.basename(video_path)}' for {scheduled_datetime} on {platform}")
+    event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+    print(f"Event created: {event.get('htmlLink')}")
+    print(f"Scheduled '{os.path.basename(video_path)}' for {scheduled_datetime} on {platform}")
 
 def main():
     sheet, drive_service, calendar_service = authenticate_google_services()
