@@ -9,6 +9,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()  # This loads the variables from .env
 
 # Set up logging
 logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO, 
@@ -16,13 +19,13 @@ logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO,
 logging.getLogger().addHandler(logging.StreamHandler())  # Also log to the console
 
 # Configuration
-MONITOR_FOLDER = r'E:\DeVlogs\[3-MediaClipID]'
-GOOGLE_SHEET_NAME = '.content calendar'
-CALENDAR_ID = 'dc54840e5bf8249bfdf9c048174f4691814bd5a652298d25f5f5e80da966d51b@group.calendar.google.com'
-CREDENTIALS_FILE = 'service_account_credentials.json'
-POSTING_HOURS_START = 0
-POSTING_HOURS_END = 24
-PLATFORMS = ['YouTube Shorts', 'X Post', 'Facebook Story', 'Instagram Reel']
+MONITOR_FOLDER = os.environ.get('MONITOR_FOLDER', r'E:\DeVlogs\[3-MediaClipID]')
+GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME', '.content calendar')
+CALENDAR_ID = os.environ.get('CALENDAR_ID')
+CREDENTIALS_FILE = os.environ.get('CREDENTIALS_FILE')
+POSTING_HOURS_START = int(os.environ.get('POSTING_HOURS_START', 0))
+POSTING_HOURS_END = int(os.environ.get('POSTING_HOURS_END', 24))
+PLATFORMS = os.environ.get('PLATFORMS', 'YouTube Shorts,X Post,Facebook Story,Instagram Reel').split(',')
 
 def authenticate_google_services():
     try:
@@ -52,6 +55,7 @@ def get_next_available_date(calendar_service):
         ).execute()
         events = events_result.get('items', [])
 
+        # Start looking from tomorrow's date if today is already taken
         next_available_day = now.date()
         while any(event['start'].get('date') == next_available_day.isoformat() for event in events):
             next_available_day += timedelta(days=1)
