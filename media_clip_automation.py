@@ -19,13 +19,13 @@ logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO,
 logging.getLogger().addHandler(logging.StreamHandler())  # Also log to the console
 
 # Configuration
-MONITOR_FOLDER = os.environ.get('MONITOR_FOLDER', r'E:\DeVlogs\[3-MediaClipID]')
-GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME', '.content calendar')
-CALENDAR_ID = os.environ.get('CALENDAR_ID')
-CREDENTIALS_FILE = os.environ.get('CREDENTIALS_FILE')
-POSTING_HOURS_START = int(os.environ.get('POSTING_HOURS_START', 0))
-POSTING_HOURS_END = int(os.environ.get('POSTING_HOURS_END', 24))
-PLATFORMS = os.environ.get('PLATFORMS', 'YouTube Shorts,X Post,Facebook Story,Instagram Reel').split(',')
+MONITOR_FOLDER = os.getenv('MONITOR_FOLDER', r'E:\DeVlogs\[3-MediaClipID]')
+GOOGLE_SHEET_NAME = os.getenv('GOOGLE_SHEET_NAME', '.content calendar')
+CALENDAR_ID = os.getenv('CALENDAR_ID')
+CREDENTIALS_FILE = os.getenv('CREDENTIALS_FILE')
+POSTING_HOURS_START = int(os.getenv('POSTING_HOURS_START', 0))
+POSTING_HOURS_END = int(os.getenv('POSTING_HOURS_END', 24))
+PLATFORMS = os.getenv('PLATFORMS', 'YouTube Shorts,X Post,Facebook Story,Instagram Reel').split(',')
 
 def authenticate_google_services():
     try:
