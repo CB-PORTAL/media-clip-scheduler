@@ -45,7 +45,7 @@ The Media Clip Scheduler is a powerful automation tool designed to streamline yo
    ```
    cp config/.env.template .env
    ```
-   
+
 2. Open the .env file in a text editor and configure the following variables:
 
    - MONITOR_FOLDER: The absolute path of the folder you want to monitor for new video files.
@@ -88,19 +88,16 @@ The Media Clip Scheduler is a powerful automation tool designed to streamline yo
 
 ## Directory Structure
 
-media-clip-scheduler/
-│
-├── config/
-│   └── .env.template
-│
-├── src/
-│   └── media_clip_automation.py  # Main script for initializing the automation
-│
-├── README.md  # The README file you are currently reading
-├── .gitignore  # Specifies files and directories to be ignored by Git
-├── .gitattributes
-│
-└── venv/  # Virtual environment directory (excluded from Git)
+### media-clip-scheduler/directory
+
+- config/: Contains configuration templates
+   - .env.template: Template for environment variables
+- src/: Source code directory
+-  - media_clip_automation.py: Main script for initializing the automation
+- README.md: The README file you are currently reading
+- .gitignore: Specifies files and directories to be ignored by Git
+- .gitattributes: Specifies attributes for paths
+- venv/: Virtual environment directory (excluded from Git)
 
 ## .gitignore Configuration
 
