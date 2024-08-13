@@ -84,17 +84,12 @@ The Media Clip Scheduler is a powerful automation tool designed to streamline yo
 media-clip-scheduler/
 │
 ├── config/
-│   └── .env.template      # Template for environment variables
-│
-├── logs/                  # Logs for the automation process
-│   └── media_clip_automation.log
-│
+│   └── .env.template      
 ├── src/
-│   └── media_clip_automation.py  # Main script for the automation process
-│
-├── .gitignore             # Specifies files and directories to be ignored by Git
+│   └── media_clip_automation.py  # Main script for initializing the automation
 ├── README.md              # The README file you are currently reading
-├── requirements.txt       # List of Python dependencies
+├── .gitignore             # Specifies files and directories to be ignored by Git
+├── .gitattributes       
 └── venv/                  # Virtual environment directory (excluded from Git)
 
 ## .gitignore Configuration
