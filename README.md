@@ -39,25 +39,32 @@ The Media Clip Scheduler is a powerful automation tool designed to streamline yo
     pip install -r requirements.txt
 
 3. **Set up the .env File:**
-    Copy the provided .env.template file to create your .env file:
-        cp config/.env.template .env
-    Open the .env file in a text editor and configure the following variables:
-        - **MONITOR_FOLDER**: 
-            The absolute path of the folder you want to monitor for new video files. 
-            (e.g., E:\[Media])
-        - **GOOGLE_SHEET_NAME**: 
-            The name of your Google Sheet where video data will be recorded.
-        - **CALENDAR_ID**: 
-            Your Google Calendar ID where posts will be scheduled.
-        - **CREDENTIALS_FILE**: 
-            The relative or absolute path to your Google API service account credentials JSON file.
-        - **POSTING_HOURS_START**: 
-            The start of the time window (in 24-hour format) during which posts should be scheduled 
-            (e.g., 0 for midnight).
-        - **POSTING_HOURS_END**: 
-            The end of the time window (in 24-hour format) during which posts should be scheduled (e.g., 24 for midnight).
-        - **PLATFORMS**: 
-            A comma-separated list of platforms where the content will be posted (e.g., YouTube Shorts,X Post,Facebook Story,Instagram Reel).
+# Set up the .env File
+
+1. Copy the provided .env.template file to create your .env file:
+   ```
+   cp config/.env.template .env
+   ```
+   
+2. Open the .env file in a text editor and configure the following variables:
+
+   - MONITOR_FOLDER: The absolute path of the folder you want to monitor for new video files.
+     (e.g., E:\[Media])
+
+   - GOOGLE_SHEET_NAME: The name of your Google Sheet where video data will be recorded.
+
+   - CALENDAR_ID: Your Google Calendar ID where posts will be scheduled.
+
+   - CREDENTIALS_FILE: The relative or absolute path to your Google API service account credentials JSON file.
+
+   - POSTING_HOURS_START: The start of the time window (in 24-hour format) during which posts should be scheduled
+     (e.g., 0 for midnight).
+
+   - POSTING_HOURS_END: The end of the time window (in 24-hour format) during which posts should be scheduled
+     (e.g., 24 for midnight).
+
+   - PLATFORMS: A comma-separated list of platforms where the content will be posted
+     (e.g., YouTube Shorts,X Post,Facebook Story,Instagram Reel).
 
 4. **Obtain Google API Credentials:**
     - Create a project in the Google Cloud Console.
@@ -84,13 +91,16 @@ The Media Clip Scheduler is a powerful automation tool designed to streamline yo
 media-clip-scheduler/
 │
 ├── config/
-│   └── .env.template      
+│   └── .env.template
+│
 ├── src/
 │   └── media_clip_automation.py  # Main script for initializing the automation
-├── README.md              # The README file you are currently reading
-├── .gitignore             # Specifies files and directories to be ignored by Git
-├── .gitattributes       
-└── venv/                  # Virtual environment directory (excluded from Git)
+│
+├── README.md  # The README file you are currently reading
+├── .gitignore  # Specifies files and directories to be ignored by Git
+├── .gitattributes
+│
+└── venv/  # Virtual environment directory (excluded from Git)
 
 ## .gitignore Configuration
 
