@@ -45,7 +45,7 @@ def authenticate_google_services():
 
 def get_next_available_date(calendar_service):
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
             timeMin=now.isoformat() + 'Z',
