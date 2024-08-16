@@ -1,0 +1,12 @@
+# Ignore .env files
+config/.env
+
+# Ignore JSON files that may contain sensitive data
+config/*.json
+
+# Ignore any other potential sensitive files
+*.env
+*.json
+
+# Ignore the virtual environment folder
+venv/
