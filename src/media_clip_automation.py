@@ -140,6 +140,13 @@ class MediaClipHandler(FileSystemEventHandler):
 
 def main():
     try:
+        print(f"MONITOR_FOLDER: {MONITOR_FOLDER}")
+        print(f"GOOGLE_SHEET_NAME: {GOOGLE_SHEET_NAME}")
+        print(f"CALENDAR_ID: {CALENDAR_ID}")
+        print(f"CREDENTIALS_FILE: {CREDENTIALS_FILE}")
+        print(f"POSTING_HOURS_START: {POSTING_HOURS_START}")
+        print(f"POSTING_HOURS_END: {POSTING_HOURS_END}")
+        print(f"PLATFORMS: {PLATFORMS}")
         sheet, drive_service, calendar_service = authenticate_google_services()
         event_handler = MediaClipHandler(sheet, drive_service, calendar_service)
         observer = Observer()
