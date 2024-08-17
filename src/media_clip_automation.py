@@ -13,6 +13,12 @@ from dotenv import load_dotenv
 
 load_dotenv()  # This loads the variables from .env
 
+# Print statements to confirm variables are loaded
+print(f"MONITOR_FOLDER: {os.getenv('MONITOR_FOLDER')}")
+print(f"GOOGLE_SHEET_NAME: {os.getenv('GOOGLE_SHEET_NAME')}")
+print(f"CALENDAR_ID: {os.getenv('CALENDAR_ID')}")
+print(f"CREDENTIALS_FILE: {os.getenv('CREDENTIALS_FILE')}")
+
 # Set up logging
 logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s:%(message)s')
