@@ -11,7 +11,7 @@ from googleapiclient.http import MediaFileUpload
 import logging
 from dotenv import load_dotenv
 
-load_dotenv() # This loads the variables from .env
+load_dotenv(dotenv_path='new-media-clip-scheduler\config\.env')  # This loads the variables from .env
 
 # Print statements to confirm variables are loaded
 print(f"MONITOR_FOLDER: {os.getenv('MONITOR_FOLDER')}")
