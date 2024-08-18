@@ -24,6 +24,20 @@ logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(message)s')
 logging.getLogger().addHandler(logging.StreamHandler())  # Also log to the console
 
+def setup_logger():
+    logger = logging.getLogger('MediaClipAutomation')
+    logger.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler('media_clip_automation.log')
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    return logger
+
+logger = setup_logger()
+
 # Configuration
 MONITOR_FOLDER = os.getenv('MONITOR_FOLDER', r'E:\DeVlogs\[3-MediaClipID]')
 GOOGLE_SHEET_NAME = os.getenv('GOOGLE_SHEET_NAME', '.content calendar')
@@ -53,6 +67,8 @@ def authenticate_google_services():
 def get_next_available_date(calendar_service):
     try:
         now = datetime.now(timezone.utc)
+        logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
+        logging.info(f"Time range start: {now.isoformat() + 'Z'}")
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
             timeMin=now.isoformat() + 'Z',
@@ -60,16 +76,10 @@ def get_next_available_date(calendar_service):
             singleEvents=True,
             orderBy='startTime'
         ).execute()
-        events = events_result.get('items', [])
-
-        # Start looking from tomorrow's date if today is already taken
-        next_available_day = now.date()
-        while any(event['start'].get('date') == next_available_day.isoformat() for event in events):
-            next_available_day += timedelta(days=1)
-        logging.info(f"Next available date for posting: {next_available_day}")
-        return next_available_day
+        logging.info(f"Events fetched: {len(events_result.get('items', []))}")
+        # ... rest of the function ...
     except Exception as e:
-        logging.error(f"Failed to get the next available date from Google Calendar: {e}")
+        logging.error(f"Calendar API error: {str(e)}")
         raise
 
 def generate_random_time(date):
@@ -127,7 +137,6 @@ class MediaClipHandler(FileSystemEventHandler):
             result = self.sheet.append_row(row)
             logging.info(f"Added row to Google Sheet: {row}")
             logging.info(f"Google Sheets API response: {result}")
-            self.sheet.append_row([os.path.basename(video_path), file_id, scheduled_datetime.strftime('%Y-%m-%d %H:%M'), platform])
             logging.info(f"Video '{os.path.basename(video_path)}' scheduled for {scheduled_datetime} on {platform}")
 
             # Create Calendar Event
@@ -147,7 +156,8 @@ class MediaClipHandler(FileSystemEventHandler):
             event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
             logging.info(f"Event created: {event.get('htmlLink')}")
         except Exception as e:
-            logging.error(f"Failed to schedule video '{os.path.basename(video_path)}': {e}")
+            logging.error(f"Sheets API error: {str(e)}")
+            raise
 
 def main():
     try:
