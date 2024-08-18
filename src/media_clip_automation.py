@@ -35,6 +35,7 @@ PLATFORMS = os.getenv('PLATFORMS', 'YouTube Shorts,X Post,Facebook Story,Instagr
 
 def authenticate_google_services():
     try:
+        logging.info(f"Attempting to authenticate with credentials file: {CREDENTIALS_FILE}")
         scope = ['https://spreadsheets.google.com/feeds',
                  'https://www.googleapis.com/auth/drive',
                  'https://www.googleapis.com/auth/calendar.events']
@@ -43,13 +44,10 @@ def authenticate_google_services():
         sheet = client.open(GOOGLE_SHEET_NAME).sheet1
         drive_service = build('drive', 'v3', credentials=creds)
         calendar_service = build('calendar', 'v3', credentials=creds)
-        logging.info("Authenticated and accessed Google services.")
+        logging.info("Successfully authenticated and accessed Google services.")
         return sheet, drive_service, calendar_service
     except Exception as e:
-        logging.error(f"Failed to authenticate Google services: {e}")
-        raise
-    except Exception as e:
-        logging.error(f"Failed to authenticate Google services: {e}")
+        logging.error(f"Failed to authenticate Google services: {str(e)}")
         raise
 
 def get_next_available_date(calendar_service):
