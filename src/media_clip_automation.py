@@ -48,6 +48,9 @@ def authenticate_google_services():
     except Exception as e:
         logging.error(f"Failed to authenticate Google services: {e}")
         raise
+    except Exception as e:
+        logging.error(f"Failed to authenticate Google services: {e}")
+        raise
 
 def get_next_available_date(calendar_service):
     try:
