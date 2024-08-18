@@ -123,6 +123,10 @@ class MediaClipHandler(FileSystemEventHandler):
             platform = random.choice(PLATFORMS)
 
             # Add to Google Sheet
+            row = [os.path.basename(video_path), file_id, scheduled_datetime.strftime('%Y-%m-%d %H:%M'), platform]
+            result = self.sheet.append_row(row)
+            logging.info(f"Added row to Google Sheet: {row}")
+            logging.info(f"Google Sheets API response: {result}")
             self.sheet.append_row([os.path.basename(video_path), file_id, scheduled_datetime.strftime('%Y-%m-%d %H:%M'), platform])
             logging.info(f"Video '{os.path.basename(video_path)}' scheduled for {scheduled_datetime} on {platform}")
 
