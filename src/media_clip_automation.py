@@ -99,18 +99,28 @@ def main():
 
 def get_next_available_date(calendar_service):
     try:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).isoformat() + 'Z'  # UTC format
         logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
-        logging.info(f"Time range start: {now.isoformat()}")
+        logging.info(f"Time range start: {now}")
+        
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
-            timeMin=now.isoformat() + 'Z',
-            maxResults=10,  # Reduced for testing
+            timeMin=now,
+            maxResults=1,  # Fetch just one event for testing
             singleEvents=True,
             orderBy='startTime'
         ).execute()
-        logging.info(f"Events fetched: {len(events_result.get('items', []))}")
-        return now.date()  # For now, just return today's date
+        
+        events = events_result.get('items', [])
+        if not events:
+            logging.info("No upcoming events found.")
+            return datetime.now(timezone.utc).date()
+        
+        # Log the first event's start time for debugging
+        first_event_start = events[0]['start'].get('dateTime', events[0]['start'].get('date'))
+        logging.info(f"First upcoming event starts at: {first_event_start}")
+        return datetime.now(timezone.utc).date()
+        
     except HttpError as e:
         logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
         raise
