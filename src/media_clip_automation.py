@@ -10,6 +10,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import logging
 from dotenv import load_dotenv
+from googleapiclient.errors import HttpError
+import traceback
 
 load_dotenv(dotenv_path='config/.env')  # This loads the variables from .env
 
@@ -64,23 +66,77 @@ def authenticate_google_services():
         logging.error(f"Failed to authenticate Google services: {str(e)}")
         raise
 
+def main():
+    try:
+        print(f"MONITOR_FOLDER: {MONITOR_FOLDER}")
+        print(f"GOOGLE_SHEET_NAME: {GOOGLE_SHEET_NAME}")
+        print(f"CALENDAR_ID: {CALENDAR_ID}")
+        print(f"CREDENTIALS_FILE: {CREDENTIALS_FILE}")
+        print(f"POSTING_HOURS_START: {POSTING_HOURS_START}")
+        print(f"POSTING_HOURS_END: {POSTING_HOURS_END}")
+        print(f"PLATFORMS: {PLATFORMS}")
+        
+        sheet, drive_service, calendar_service = authenticate_google_services()
+        
+        # Test calendar access
+        test_calendar_access(calendar_service)
+        
+        event_handler = MediaClipHandler(sheet, drive_service, calendar_service)
+        observer = Observer()
+        observer.schedule(event_handler, path=MONITOR_FOLDER, recursive=False)
+        observer.start()
+        logging.info(f"Started monitoring folder: {MONITOR_FOLDER}")
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
+    except Exception as e:
+        logging.critical(f"Script failed: {e}")
+        logging.critical(f"Traceback: {traceback.format_exc()}")
+
 def get_next_available_date(calendar_service):
     try:
         now = datetime.now(timezone.utc)
         logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
-        logging.info(f"Time range start: {now.isoformat() + 'Z'}")
+        logging.info(f"Time range start: {now.isoformat()}")
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
             timeMin=now.isoformat() + 'Z',
-            maxResults=1000,
+            maxResults=10,  # Reduced for testing
             singleEvents=True,
             orderBy='startTime'
         ).execute()
         logging.info(f"Events fetched: {len(events_result.get('items', []))}")
-        # ... rest of the function ...
-    except Exception as e:
-        logging.error(f"Calendar API error: {str(e)}")
+        return now.date()  # For now, just return today's date
+    except HttpError as e:
+        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
         raise
+    except Exception as e:
+        logging.error(f"Unexpected error in get_next_available_date: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
+        raise
+
+def test_calendar_access(calendar_service):
+    try:
+        now = datetime.now(timezone.utc)
+        logging.info(f"Testing calendar access for: {CALENDAR_ID}")
+        logging.info(f"Current time: {now.isoformat()}")
+        events_result = calendar_service.events().list(
+            calendarId=CALENDAR_ID,
+            timeMin=now.isoformat() + 'Z',
+            maxResults=10,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+        logging.info(f"Successfully fetched {len(events_result.get('items', []))} events")
+    except HttpError as e:
+        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
+    except Exception as e:
+        logging.error(f"Unexpected error in test_calendar_access: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
 
 def generate_random_time(date):
     hour = random.randint(POSTING_HOURS_START, POSTING_HOURS_END - 1)
