@@ -114,8 +114,6 @@ def retry_calendar_api(func):
                     raise
     return wrapper
 
-@retry_calendar_api
-
 def get_next_available_date(calendar_service):
     try:
         now = datetime.now(timezone.utc).isoformat() + 'Z'
