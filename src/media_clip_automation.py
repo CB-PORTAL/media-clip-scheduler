@@ -12,6 +12,7 @@ import logging
 from dotenv import load_dotenv
 from googleapiclient.errors import HttpError
 import traceback
+from time import sleep
 
 load_dotenv(dotenv_path='config/.env')  # This loads the variables from .env
 
@@ -52,7 +53,8 @@ PLATFORMS = os.getenv('PLATFORMS', 'YouTube Shorts,X Post,Facebook Story,Instagr
 def authenticate_google_services():
     try:
         logging.info(f"Attempting to authenticate with credentials file: {CREDENTIALS_FILE}")
-        scope = ['https://spreadsheets.google.com/feeds',
+        scope = ['https://www.googleapis.com/auth/calendar',
+                 'https://spreadsheets.google.com/feeds',
                  'https://www.googleapis.com/auth/drive',
                  'https://www.googleapis.com/auth/calendar.events']
         creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
@@ -97,21 +99,56 @@ def main():
         logging.critical(f"Script failed: {e}")
         logging.critical(f"Traceback: {traceback.format_exc()}")
 
+def retry_calendar_api(func):
+    def wrapper(*args, **kwargs):
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                return func(*args, **kwargs)
+            except HttpError as e:
+                if e.resp.status in [403, 500, 503] and attempt < max_retries - 1:
+                    sleep_time = 2 ** attempt
+                    logging.warning(f"Attempt {attempt + 1} failed. Retrying in {sleep_time} seconds...")
+                    sleep(sleep_time)
+                else:
+                    raise
+    return wrapper
+
+@retry_calendar_api
+
 def get_next_available_date(calendar_service):
     try:
-        now = datetime.now(timezone.utc).isoformat() + 'Z'
+        now = datetime.now(timezone.utc)
         logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
-        logging.info(f"Time range start: {now}")
+        logging.info(f"Time range start: {now.isoformat()}")
+        
+        # Check for correct time formatting and parameters
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
-            timeMin=now,
-            maxResults=1,
-            orderBy='startTime'
+            timeMin=now.isoformat() + 'Z',  # Ensures correct UTC time format
+            maxResults=1,  # For testing purposes
+            singleEvents=True,  # Ensures we get single, non-recurring events
+            orderBy='startTime'  # Orders by event start time
         ).execute()
+        
         logging.info(f"Events fetched: {len(events_result.get('items', []))}")
-        return datetime.now(timezone.utc).date()
+        
+        if not events_result.get('items', []):
+            logging.info("No upcoming events found.")
+            return now.date()
+        
+        next_event = events_result['items'][0]
+        next_event_start = next_event['start'].get('dateTime', next_event['start'].get('date'))
+        logging.info(f"Next event starts at: {next_event_start}")
+        
+        return now.date()  # Placeholder: return current date if no errors
+    
+    except HttpError as e:
+        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
+        raise
     except Exception as e:
-        logging.error(f"Error in get_next_available_date: {str(e)}")
+        logging.error(f"Unexpected error in get_next_available_date: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 def test_calendar_access(calendar_service):
