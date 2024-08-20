@@ -77,7 +77,7 @@ def main():
         print(f"PLATFORMS: {PLATFORMS}")
         
         sheet, drive_service, calendar_service = authenticate_google_services()
-        
+
         # Test calendar access
         test_calendar_access(calendar_service)
         
@@ -99,54 +99,34 @@ def main():
 
 def get_next_available_date(calendar_service):
     try:
-        now = datetime.now(timezone.utc).isoformat() + 'Z'  # UTC format
+        now = datetime.now(timezone.utc).isoformat() + 'Z'
         logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
         logging.info(f"Time range start: {now}")
-        
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
             timeMin=now,
-            maxResults=1,  # Fetch just one event for testing
-            singleEvents=True,
+            maxResults=1,
             orderBy='startTime'
         ).execute()
-        
-        events = events_result.get('items', [])
-        if not events:
-            logging.info("No upcoming events found.")
-            return datetime.now(timezone.utc).date()
-        
-        # Log the first event's start time for debugging
-        first_event_start = events[0]['start'].get('dateTime', events[0]['start'].get('date'))
-        logging.info(f"First upcoming event starts at: {first_event_start}")
+        logging.info(f"Events fetched: {len(events_result.get('items', []))}")
         return datetime.now(timezone.utc).date()
-        
-    except HttpError as e:
-        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
-        raise
     except Exception as e:
-        logging.error(f"Unexpected error in get_next_available_date: {str(e)}")
-        logging.error(f"Traceback: {traceback.format_exc()}")
+        logging.error(f"Error in get_next_available_date: {str(e)}")
         raise
 
 def test_calendar_access(calendar_service):
     try:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).isoformat() + 'Z'
         logging.info(f"Testing calendar access for: {CALENDAR_ID}")
-        logging.info(f"Current time: {now.isoformat()}")
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
-            timeMin=now.isoformat() + 'Z',
-            maxResults=10,
-            singleEvents=True,
+            timeMin=now,
+            maxResults=1,
             orderBy='startTime'
         ).execute()
         logging.info(f"Successfully fetched {len(events_result.get('items', []))} events")
-    except HttpError as e:
-        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
     except Exception as e:
-        logging.error(f"Unexpected error in test_calendar_access: {str(e)}")
-        logging.error(f"Traceback: {traceback.format_exc()}")
+        logging.error(f"Error in test_calendar_access: {str(e)}")
 
 def generate_random_time(date):
     hour = random.randint(POSTING_HOURS_START, POSTING_HOURS_END - 1)
