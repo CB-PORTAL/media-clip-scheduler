@@ -7,6 +7,7 @@ config/*.json
 # Ignore any other potential sensitive files
 *.env
 *.json
+*.log
 
 # Ignore the virtual environment folder
 venv/
