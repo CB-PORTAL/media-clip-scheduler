@@ -125,7 +125,7 @@ def get_next_available_date(calendar_service):
             calendarId=CALENDAR_ID,
             timeMin=now,
             maxResults=1,
-            orderBy='startTime'
+            singleEvents=True
         ).execute()
         logging.info(f"Events fetched: {len(events_result.get('items', []))}")
         return datetime.now(timezone.utc).date()
@@ -141,7 +141,7 @@ def test_calendar_access(calendar_service):
             calendarId=CALENDAR_ID,
             timeMin=now,
             maxResults=1,
-            orderBy='startTime'
+            singleEvents=True
         ).execute()
         logging.info(f"Successfully fetched {len(events_result.get('items', []))} events")
     except Exception as e:
