@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 from googleapiclient.errors import HttpError
 import traceback
 from time import sleep
+from google.oauth2 import service_account
+from datetime import datetime
 
 load_dotenv(dotenv_path='config/.env')  # This loads the variables from .env
 
@@ -116,39 +118,24 @@ def retry_calendar_api(func):
 
 def get_next_available_date(calendar_service):
     try:
-        now = datetime.now(timezone.utc).isoformat() + 'Z'
+        now = datetime.now(timezone.utc).isoformat()
         logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
+        logging.info(f"Time range start (timeMin): {now}")
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
             timeMin=now,
-            maxResults=1,  # Limit to 1 result for simplicity
-            singleEvents=True,
+            maxResults=1,
             orderBy='startTime'
         ).execute()
-        
         logging.info(f"Events fetched: {len(events_result.get('items', []))}")
-        
-        if not events_result.get('items', []):
-            logging.info("No upcoming events found.")
-            return datetime.now(timezone.utc).date()  # Return today's date if no events found
-        
-        next_event = events_result['items'][0]
-        next_event_start = next_event['start'].get('dateTime', next_event['start'].get('date'))
-        logging.info(f"Next event starts at: {next_event_start}")
-        
-        return datetime.now(timezone.utc).date()  # Placeholder return value for now
-    
+        return datetime.now(timezone.utc).date()
     except HttpError as e:
         logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
-        raise
-    except Exception as e:
-        logging.error(f"Unexpected error in get_next_available_date: {str(e)}")
-        logging.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 def test_calendar_access(calendar_service):
     try:
-        now = datetime.now(timezone.utc).isoformat() + 'Z'
+        now = datetime.now(timezone.utc).isoformat()
         logging.info(f"Testing calendar access for: {CALENDAR_ID}")
         events_result = calendar_service.events().list(
             calendarId=CALENDAR_ID,
