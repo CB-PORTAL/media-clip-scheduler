@@ -14,34 +14,14 @@ from googleapiclient.errors import HttpError
 import traceback
 from time import sleep
 from google.oauth2 import service_account
-from datetime import datetime
+from social_media_poster import post_to_social_media
 
-load_dotenv(dotenv_path='config/.env')  # This loads the variables from .env
-
-# Print statements to confirm variables are loaded
-print(f"MONITOR_FOLDER: {os.getenv('MONITOR_FOLDER')}")
-print(f"GOOGLE_SHEET_NAME: {os.getenv('GOOGLE_SHEET_NAME')}")
-print(f"CALENDAR_ID: {os.getenv('CALENDAR_ID')}")
-print(f"CREDENTIALS_FILE: {os.getenv('CREDENTIALS_FILE')}")
+load_dotenv(dotenv_path='config/.env')
 
 # Set up logging
-logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO, 
+logging.basicConfig(filename='media_clip_automation.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(message)s')
 logging.getLogger().addHandler(logging.StreamHandler())  # Also log to the console
-
-def setup_logger():
-    logger = logging.getLogger('MediaClipAutomation')
-    logger.setLevel(logging.DEBUG)
-    file_handler = logging.FileHandler('media_clip_automation.log')
-    console_handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    return logger
-
-logger = setup_logger()
 
 # Configuration
 MONITOR_FOLDER = os.getenv('MONITOR_FOLDER', r'E:\DeVlogs\[3-MediaClipID]')
@@ -70,37 +50,6 @@ def authenticate_google_services():
         logging.error(f"Failed to authenticate Google services: {str(e)}")
         raise
 
-def main():
-    try:
-        print(f"MONITOR_FOLDER: {MONITOR_FOLDER}")
-        print(f"GOOGLE_SHEET_NAME: {GOOGLE_SHEET_NAME}")
-        print(f"CALENDAR_ID: {CALENDAR_ID}")
-        print(f"CREDENTIALS_FILE: {CREDENTIALS_FILE}")
-        print(f"POSTING_HOURS_START: {POSTING_HOURS_START}")
-        print(f"POSTING_HOURS_END: {POSTING_HOURS_END}")
-        print(f"PLATFORMS: {PLATFORMS}")
-        
-        sheet, drive_service, calendar_service = authenticate_google_services()
-
-        # Test calendar access
-        test_calendar_access(calendar_service)
-        
-        event_handler = MediaClipHandler(sheet, drive_service, calendar_service)
-        observer = Observer()
-        observer.schedule(event_handler, path=MONITOR_FOLDER, recursive=False)
-        observer.start()
-        logging.info(f"Started monitoring folder: {MONITOR_FOLDER}")
-
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            observer.stop()
-        observer.join()
-    except Exception as e:
-        logging.critical(f"Script failed: {e}")
-        logging.critical(f"Traceback: {traceback.format_exc()}")
-
 def retry_calendar_api(func):
     def wrapper(*args, **kwargs):
         max_retries = 5
@@ -116,36 +65,19 @@ def retry_calendar_api(func):
                     raise
     return wrapper
 
+@retry_calendar_api
 def get_next_available_date(calendar_service):
-    try:
-        now = datetime.now(timezone.utc).isoformat()
-        logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
-        logging.info(f"Time range start (timeMin): {now}")
-        events_result = calendar_service.events().list(
-            calendarId=CALENDAR_ID,
-            timeMin=now,
-            maxResults=1,
-            singleEvents=True
-        ).execute()
-        logging.info(f"Events fetched: {len(events_result.get('items', []))}")
-        return datetime.now(timezone.utc).date()
-    except HttpError as e:
-        logging.error(f"Calendar API error: {e.resp.status} {e.content.decode('utf-8')}")
-        raise
-
-def test_calendar_access(calendar_service):
-    try:
-        now = datetime.now(timezone.utc).isoformat()
-        logging.info(f"Testing calendar access for: {CALENDAR_ID}")
-        events_result = calendar_service.events().list(
-            calendarId=CALENDAR_ID,
-            timeMin=now,
-            maxResults=1,
-            singleEvents=True
-        ).execute()
-        logging.info(f"Successfully fetched {len(events_result.get('items', []))} events")
-    except Exception as e:
-        logging.error(f"Error in test_calendar_access: {str(e)}")
+    now = datetime.now(timezone.utc).isoformat()
+    logging.info(f"Fetching events from calendar: {CALENDAR_ID}")
+    logging.info(f"Time range start (timeMin): {now}")
+    events_result = calendar_service.events().list(
+        calendarId=CALENDAR_ID,
+        timeMin=now,
+        maxResults=1,
+        singleEvents=True
+    ).execute()
+    logging.info(f"Events fetched: {len(events_result.get('items', []))}")
+    return datetime.now(timezone.utc).date()
 
 def generate_random_time(date):
     hour = random.randint(POSTING_HOURS_START, POSTING_HOURS_END - 1)
@@ -220,8 +152,17 @@ class MediaClipHandler(FileSystemEventHandler):
 
             event = self.calendar_service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
             logging.info(f"Event created: {event.get('htmlLink')}")
+
+            # Post to social media
+            caption = f"Check out our latest video! #ContentCreator #{platform.replace(' ', '')}"
+            try:
+                post_to_social_media(video_path, platform, caption)
+            except Exception as e:
+                logging.error(f"Failed to post to social media: {str(e)}")
+                # You might want to add some recovery or notification logic here
+
         except Exception as e:
-            logging.error(f"Sheets API error: {str(e)}")
+            logging.error(f"Error in schedule_video: {str(e)}")
             raise
 
 def main():
@@ -233,7 +174,9 @@ def main():
         print(f"POSTING_HOURS_START: {POSTING_HOURS_START}")
         print(f"POSTING_HOURS_END: {POSTING_HOURS_END}")
         print(f"PLATFORMS: {PLATFORMS}")
+        
         sheet, drive_service, calendar_service = authenticate_google_services()
+        
         event_handler = MediaClipHandler(sheet, drive_service, calendar_service)
         observer = Observer()
         observer.schedule(event_handler, path=MONITOR_FOLDER, recursive=False)
@@ -248,6 +191,7 @@ def main():
         observer.join()
     except Exception as e:
         logging.critical(f"Script failed: {e}")
+        logging.critical(f"Traceback: {traceback.format_exc()}")
 
 if __name__ == "__main__":
     main()
